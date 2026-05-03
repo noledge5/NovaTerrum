@@ -306,6 +306,14 @@ async def get_map():
     return get_map_data()
 
 
+@app.get("/api/location/{slug}")
+async def get_location(slug: str):
+    candidates = list(WIKI.glob(f"locations/{slug}*.md"))
+    if not candidates:
+        raise HTTPException(404, "Location not found")
+    return {"content": read_file(candidates[0])}
+
+
 @app.get("/api/models")
 async def get_models():
     return MODELS
