@@ -12,8 +12,8 @@ COPY . .
 #   docker run -v /volume1/NovaTerrum/wiki:/wiki ...
 ENV WIKI_PATH=/wiki
 
-EXPOSE 3000
+EXPOSE 8088
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/state || exit 1
+  CMD curl -f http://localhost:8088/api/state || exit 1
 
 CMD ["python", "main.py"]
