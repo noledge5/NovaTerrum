@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NovaTerrum</title>
+<style>
+:root {
+  --bg: #111;
+  --surface: #1c1c1c;
+  --surface2: #242424;
+  --border: #333;
+  --accent: #8b0000;
+  --accent2: #b31010;
+  --text: #c8c8c8;
+  --text-dim: #777;
+  --green: #2d5a27;
+  --yellow: #7a6200;
+  --tab-h: 62px;
+  --header-h: 48px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; }
+
+/* Layout */
+#app { display: flex; flex-direction: column; height: 100dvh; }
+#header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; }
+#header .logo { font-size: 17px; font-weight: 700; letter-spacing: 1px; color: #d4a0a0; }
+#header .status-pill { font-size: 12px; color: var(--text-dim); background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
+#btn-settings { background: none; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+
+#content { flex: 1; overflow: hidden; position: relative; }
+.tab { display: none; position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.tab.active { display: flex; flex-direction: column; }
+
+/* Tab Bar */
+#tab-bar { height: calc(var(--tab-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--surface); border-top: 1px solid var(--border); display: flex; flex-shrink: 0; }
+.tab-btn { flex: 1; background: none; border: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; font-size: 10px; transition: color .15s; padding-bottom: 2px; }
+.tab-btn .icon { font-size: 20px; line-height: 1; }
+.tab-btn.active { color: var(--accent2); }
+
+/* === CHAT === */
+#messages { flex: 1; padding: 12px 12px 8px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.msg { max-width: 88%; line-height: 1.5; border-radius: 12px; padding: 10px 13px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+.msg.player { align-self: flex-end; background: #1a2d1e; border-bottom-right-radius: 3px; color: #a8d4a8; }
+.msg.dm { align-self: flex-start; background: var(--surface2); border-bottom-left-radius: 3px; border: 1px solid var(--border); }
+.msg.dm .dm-label { font-size: 10px; color: var(--accent2); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.msg.system { align-self: center; background: none; color: var(--text-dim); font-size: 12px; font-style: italic; border: none; padding: 4px; }
+.cursor { display: inline-block; width: 8px; height: 14px; background: var(--text-dim); margin-left: 2px; vertical-align: middle; animation: blink .7s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+#input-area { padding: 10px 10px 10px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+#input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 9px 15px; color: var(--text); font-size: 15px; resize: none; max-height: 120px; outline: none; line-height: 1.4; font-family: inherit; }
+#input:focus { border-color: #555; }
+#btn-send { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 16px; cursor: pointer; flex-shrink: 0; transition: background .15s; }
+#btn-send:hover { background: var(--accent2); }
+#btn-send:disabled { background: #333; cursor: not-allowed; }
+
+/* === STATUS === */
+#tab-status { padding: 14px 14px calc(14px + var(--safe-bottom)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.card-title { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; }
+.hp-bar-wrap { height: 22px; background: var(--surface2); border-radius: 11px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 6px; }
+.hp-bar { height: 100%; border-radius: 11px; transition: width .4s, background .4s; }
+.hp-text { font-size: 13px; color: var(--text-dim); text-align: right; }
+.hp-text span { color: var(--text); font-weight: 600; }
+.location-name { font-size: 16px; font-weight: 600; color: #d4b896; }
+.location-coords { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.badge { font-size: 12px; padding: 3px 9px; border-radius: 12px; font-weight: 500; }
+.badge.status { background: #3a1a00; color: #f0a050; border: 1px solid #6a3a00; }
+.badge.injury { background: #3a0000; color: #f08080; border: 1px solid #6a0000; }
+.badge.empty { color: var(--text-dim); font-style: italic; font-size: 13px; }
+.attrs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.attr-cell { background: var(--surface2); border-radius: 8px; padding: 8px; text-align: center; border: 1px solid var(--border); }
+.attr-name { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+.attr-val { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.attr-mod { font-size: 11px; color: var(--text-dim); }
+.skill-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #1e1e1e; }
+.skill-row:last-child { border-bottom: none; }
+.skill-name { flex: 1; font-size: 13px; }
+.skill-level { font-size: 12px; color: var(--text-dim); width: 24px; text-align: right; }
+.skill-bar-wrap { width: 60px; height: 4px; background: var(--surface2); border-radius: 2px; }
+.skill-bar { height: 100%; background: var(--accent2); border-radius: 2px; }
+.no-char { color: var(--text-dim); font-style: italic; font-size: 14px; line-height: 1.6; }
+
+/* === WELT MAP === */
+#tab-welt { overflow: hidden; }
+#map-wrap { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 10px; }
+#map-svg { width: 100%; max-width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 8px; }
+.map-legend { padding: 10px 14px 14px; display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-dim); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+#map-tooltip { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; pointer-events: none; z-index: 100; display: none; white-space: nowrap; }
+
+/* === INVENTAR === */
+#tab-inventar { padding: 14px 14px calc(14px + var(--safe-bottom)); gap: 12px; }
+.gold-display { font-size: 28px; font-weight: 700; color: #d4a020; text-align: center; padding: 8px 0; }
+.gold-label { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: -6px; margin-bottom: 4px; }
+.item-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #1e1e1e; gap: 10px; }
+.item-row:last-child { border-bottom: none; }
+.item-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+.item-name { flex: 1; font-size: 14px; }
+.empty-state { color: var(--text-dim); font-style: italic; font-size: 14px; text-align: center; padding: 20px 0; }
+.quest-row { padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
+.quest-row:last-child { border-bottom: none; }
+.quest-name { font-size: 14px; color: #a0c4d4; }
+
+/* === SETTINGS MODAL === */
+#settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+#settings-overlay.open { display: flex; }
+#settings-panel { background: var(--surface); border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + var(--safe-bottom)); width: 100%; max-width: 500px; }
+#settings-panel h2 { font-size: 16px; margin-bottom: 16px; color: var(--text); }
+.setting-group { margin-bottom: 16px; }
+.setting-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.setting-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; }
+.btn-danger { background: #3a0000; border: 1px solid #6a0000; color: #f08080; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%; margin-top: 8px; }
+.btn-close { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <span class="logo">⚔ NovaTerrum</span>
+    <span class="status-pill" id="header-status">—</span>
+    <button id="btn-settings" onclick="openSettings()">⚙</button>
+  </header>
+
+  <div id="content">
+    <!-- CHAT -->
+    <section id="tab-chat" class="tab active">
+      <div id="messages"></div>
+      <div id="input-area">
+        <textarea id="input" placeholder="Was tust du?…" rows="1"
+          oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+        <button id="btn-send" onclick="sendMessage()">▶</button>
+      </div>
+    </section>
+
+    <!-- STATUS -->
+    <section id="tab-status" class="tab">
+      <div class="card" id="card-hp">
+        <div class="card-title">Trefferpunkte</div>
+        <div class="hp-bar-wrap"><div class="hp-bar" id="hp-bar" style="width:0%"></div></div>
+        <div class="hp-text"><span id="hp-text">—</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Aufenthaltsort</div>
+        <div class="location-name" id="loc-name">Unbekannt</div>
+        <div class="location-coords" id="loc-coords"></div>
+      </div>
+      <div class="card" id="card-effects">
+        <div class="card-title">Zustände &amp; Verletzungen</div>
+        <div class="badges" id="badges"></div>
+      </div>
+      <div class="card" id="card-attrs">
+        <div class="card-title">Attribute</div>
+        <div class="attrs-grid" id="attrs-grid"><p class="no-char">Noch kein Charakter erstellt.</p></div>
+      </div>
+      <div class="card" id="card-skills">
+        <div class="card-title">Skills</div>
+        <div id="skills-list"><p class="no-char">Starte ein Gespräch mit dem DM um einen Charakter zu erstellen.</p></div>
+      </div>
+    </section>
+
+    <!-- WELT -->
+    <section id="tab-welt" class="tab">
+      <div id="map-wrap">
+        <svg id="map-svg" viewBox="0 0 2000 3000" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#e8f4f8"></div>Tundra</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2d4a2d"></div>Nadelwald</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4a6b3a"></div>Gemäßigt</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6b6060"></div>Gebirge</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#c8a850"></div>Steppe</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d4a96a"></div>Halbwüste</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#cc0000"></div>Aktuell</div>
+      </div>
+    </section>
+
+    <!-- INVENTAR -->
+    <section id="tab-inventar" class="tab">
+      <div class="card">
+        <div class="gold-display" id="gold-display">0</div>
+        <div class="gold-label">Goldmark</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ausrüstung &amp; Gegenstände</div>
+        <div id="item-list"><p class="empty-state">Inventar leer.</p></div>
+      </div>
+      <div class="card" id="card-quests" style="display:none">
+        <div class="card-title">Aktive Quests</div>
+        <div id="quest-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <nav id="tab-bar">
+    <button class="tab-btn active" data-tab="chat" onclick="switchTab('chat')">
+      <span class="icon">💬</span><span>Chat</span>
+    </button>
+    <button class="tab-btn" data-tab="status" onclick="switchTab('status')">
+      <span class="icon">⚔</span><span>Status</span>
+    </button>
+    <button class="tab-btn" data-tab="welt" onclick="switchTab('welt')">
+      <span class="icon">🗺</span><span>Welt</span>
+    </button>
+    <button class="tab-btn" data-tab="inventar" onclick="switchTab('inventar')">
+      <span class="icon">🎒</span><span>Inventar</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Settings -->
+<div id="settings-overlay" onclick="closeSettingsOnBg(event)">
+  <div id="settings-panel">
+    <h2>Einstellungen</h2>
+    <div class="setting-group">
+      <div class="setting-label">Modell</div>
+      <select class="setting-select" id="sel-model"></select>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Kontext-Modus</div>
+      <select class="setting-select" id="sel-context">
+        <option value="minimal">Minimal — nur Spielzustand</option>
+        <option value="smart" selected>Smart — Zustand + Ort + Mechaniken</option>
+        <option value="full">Voll — gesamtes Wiki</option>
+      </select>
+    </div>
+    <button class="btn-danger" onclick="clearHistory()">🗑 Spielverlauf löschen</button>
+    <button class="btn-close" onclick="closeSettings()">Schließen</button>
+  </div>
+</div>
+
+<div id="map-tooltip"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let gameState = {};
+let streaming = false;
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+async function init() {
+  await loadSettings();
+  await refreshState();
+  await loadMap();
+  loadHistory();
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+  if (name === 'welt') loadMap();
+  if (name === 'chat') scrollMessages();
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function scrollMessages() {
+  const el = document.getElementById('messages');
+  el.scrollTop = el.scrollHeight;
+}
+
+function addMessage(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (role === 'dm') {
+    div.innerHTML = '<div class="dm-label">DM</div><div class="dm-text"></div>';
+    div.querySelector('.dm-text').textContent = text;
+  } else {
+    div.textContent = text;
+  }
+  document.getElementById('messages').appendChild(div);
+  scrollMessages();
+  return div;
+}
+
+function cleanStateBlock(text) {
+  return text.replace(/\[STATE:[^\]]*\]/g, '').trim();
+}
+
+async function sendMessage() {
+  if (streaming) return;
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('btn-send').disabled = true;
+  streaming = true;
+
+  addMessage('player', msg);
+
+  // DM bubble with cursor
+  const dmDiv = document.createElement('div');
+  dmDiv.className = 'msg dm';
+  dmDiv.innerHTML = '<div class="dm-label">DM</div><div class="dm-text"><span class="cursor"></span></div>';
+  document.getElementById('messages').appendChild(dmDiv);
+  const dmText = dmDiv.querySelector('.dm-text');
+  scrollMessages();
+
+  let accumulated = '';
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const lines = decoder.decode(value).split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data.text) {
+            accumulated += data.text;
+            dmText.textContent = cleanStateBlock(accumulated);
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            dmText.appendChild(cursor);
+            scrollMessages();
+          }
+          if (data.done) {
+            dmText.textContent = data.clean || cleanStateBlock(accumulated);
+            if (data.state) updateStateDisplay(data.state);
+          }
+          if (data.error) {
+            dmText.textContent = '⚠ Fehler: ' + data.error;
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    dmText.textContent = '⚠ Verbindungsfehler.';
+  }
+
+  streaming = false;
+  document.getElementById('btn-send').disabled = false;
+  document.getElementById('input').focus();
+}
+
+async function loadHistory() {
+  try {
+    const hist = await fetch('/api/history').then(r => r.json());
+    const msgs = document.getElementById('messages');
+    msgs.innerHTML = '';
+    if (hist.length === 0) {
+      addMessage('system', 'Willkommen in NovaTerrum. Sprich mit dem DM um zu beginnen.');
+    }
+    for (const m of hist) {
+      addMessage(m.role === 'user' ? 'player' : 'dm', m.content);
+    }
+  } catch {}
+}
+
+// ─── State Display ────────────────────────────────────────────────────────────
+async function refreshState() {
+  try {
+    const state = await fetch('/api/state').then(r => r.json());
+    updateStateDisplay(state);
+  } catch {}
+}
+
+function updateStateDisplay(state) {
+  gameState = state;
+
+  // Header pill
+  const pill = document.getElementById('header-status');
+  if (state.hp_current !== null && state.hp_max) {
+    pill.textContent = `❤ ${state.hp_current}/${state.hp_max}`;
+  }
+
+  // HP Bar
+  if (state.hp_current !== null && state.hp_max) {
+    const pct = Math.max(0, Math.min(100, (state.hp_current / state.hp_max) * 100));
+    const bar = document.getElementById('hp-bar');
+    bar.style.width = pct + '%';
+    bar.style.background = pct > 60 ? '#2d7a2d' : pct > 25 ? '#7a6200' : '#8b0000';
+    document.getElementById('hp-text').textContent = `${state.hp_current} / ${state.hp_max} HP`;
+  }
+
+  // Location
+  document.getElementById('loc-name').textContent = state.location || '—';
+
+  // Badges
+  const badges = document.getElementById('badges');
+  badges.innerHTML = '';
+  const all = [
+    ...state.status_effects.map(s => ({ text: s, cls: 'status' })),
+    ...state.injuries.map(i => ({ text: i, cls: 'injury' }))
+  ];
+  if (all.length === 0) {
+    badges.innerHTML = '<span class="badge empty">Keine Zustände</span>';
+  } else {
+    all.forEach(({ text, cls }) => {
+      const b = document.createElement('span');
+      b.className = `badge ${cls}`;
+      b.textContent = text;
+      badges.appendChild(b);
+    });
+  }
+
+  // Attributes
+  const attrs = state.attributes;
+  const grid = document.getElementById('attrs-grid');
+  if (Object.keys(attrs).length > 0) {
+    grid.innerHTML = '';
+    ['STR','DEX','KON','INT','WIS','CHA'].forEach(a => {
+      const val = attrs[a] || 10;
+      const mod = Math.floor((val - 10) / 2);
+      const modStr = (mod >= 0 ? '+' : '') + mod;
+      grid.innerHTML += `<div class="attr-cell">
+        <div class="attr-name">${a}</div>
+        <div class="attr-val">${val}</div>
+        <div class="attr-mod">${modStr}</div>
+      </div>`;
+    });
+  }
+
+  // Skills
+  const skills = state.skills;
+  const skillList = document.getElementById('skills-list');
+  if (Object.keys(skills).length > 0) {
+    skillList.innerHTML = '';
+    Object.entries(skills).sort((a,b) => b[1]-a[1]).forEach(([name, level]) => {
+      const nextCost = level > 0 ? level * level * 10 : 10;
+      const row = document.createElement('div');
+      row.className = 'skill-row';
+      row.innerHTML = `<span class="skill-name">${name}</span>
+        <div class="skill-bar-wrap"><div class="skill-bar" style="width:${Math.min(100, level*4)}%"></div></div>
+        <span class="skill-level">${level}</span>`;
+      skillList.appendChild(row);
+    });
+  }
+
+  // Gold
+  document.getElementById('gold-display').textContent = state.gold || 0;
+
+  // Inventory
+  const itemList = document.getElementById('item-list');
+  if (state.inventory.length === 0) {
+    itemList.innerHTML = '<p class="empty-state">Inventar leer.</p>';
+  } else {
+    itemList.innerHTML = '';
+    state.inventory.forEach(item => {
+      itemList.innerHTML += `<div class="item-row">
+        <span class="item-icon">⚔</span>
+        <span class="item-name">${item}</span>
+      </div>`;
+    });
+  }
+
+  // Quests
+  const questCard = document.getElementById('card-quests');
+  const questList = document.getElementById('quest-list');
+  if (state.quests.length > 0) {
+    questCard.style.display = '';
+    questList.innerHTML = '';
+    state.quests.forEach(q => {
+      questList.innerHTML += `<div class="quest-row"><div class="quest-name">📜 ${q}</div></div>`;
+    });
+  } else {
+    questCard.style.display = 'none';
+  }
+}
+
+// ─── Map ──────────────────────────────────────────────────────────────────────
+const REGION_COLORS = {
+  tundra: '#c8e0e8', nadelwald: '#2d4a2d', gemäßigt: '#3a5a30',
+  gebirge: '#5a5050', steppe: '#a08030', halbwüste: '#b08848',
+  küste: '#304858', inseln: '#205048', mitte: '#3a5a30', nord: '#2d4a2d',
+  süd: '#a08030', default: '#3a3a3a'
+};
+
+async function loadMap() {
+  try {
+    const locs = await fetch('/api/map').then(r => r.json());
+    renderMap(locs);
+  } catch {}
+}
+
+function renderMap(locations) {
+  const svg = document.getElementById('map-svg');
+  svg.innerHTML = '';
+
+  // Climate zone backgrounds (SVG y = 3000 - world y, flipped)
+  const zones = [
+    { y: 2700, h: 300, color: '#b08848', label: 'Halbwüste' },
+    { y: 2200, h: 500, color: '#a08030', label: 'Steppe' },
+    { y: 1100, h: 1100, color: '#3a5a30', label: 'Gemäßigt' },
+    { y: 500,  h: 600,  color: '#2d4a2d', label: 'Nadelwald' },
+    { y: 0,    h: 500,  color: '#c8dce4', label: 'Tundra' },
+  ];
+  zones.forEach(z => {
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', 0); rect.setAttribute('y', z.y);
+    rect.setAttribute('width', 2000); rect.setAttribute('height', z.h);
+    rect.setAttribute('fill', z.color); rect.setAttribute('opacity', '0.35');
+    svg.appendChild(rect);
+  });
+
+  // Gebirge overlay
+  const gbg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  gbg.setAttribute('x', 750); gbg.setAttribute('y', 1400); // world y 1000-1600 → svg 1400-2000
+  gbg.setAttribute('width', 600); gbg.setAttribute('height', 600);
+  gbg.setAttribute('fill', '#5a5050'); gbg.setAttribute('opacity', '0.4');
+  svg.appendChild(gbg);
+
+  // Grid lines (subtle)
+  for (let x = 0; x <= 2000; x += 500) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x); line.setAttribute('y1', 0);
+    line.setAttribute('x2', x); line.setAttribute('y2', 3000);
+    line.setAttribute('stroke', '#ffffff10'); line.setAttribute('stroke-width', 1);
+    svg.appendChild(line);
+  }
+  for (let y = 0; y <= 3000; y += 500) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', 0); line.setAttribute('y1', y);
+    line.setAttribute('x2', 2000); line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#ffffff10'); line.setAttribute('stroke-width', 1);
+    svg.appendChild(line);
+  }
+
+  // Locations
+  const tooltip = document.getElementById('map-tooltip');
+  locations.forEach(loc => {
+    const svgY = 3000 - loc.y;
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.style.cursor = 'pointer';
+
+    if (loc.current) {
+      // Pulsing ring
+      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ring.setAttribute('cx', loc.x); ring.setAttribute('cy', svgY); ring.setAttribute('r', 22);
+      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#cc0000');
+      ring.setAttribute('stroke-width', 2); ring.setAttribute('opacity', '0.5');
+      ring.innerHTML = '<animate attributeName="r" values="18;26;18" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>';
+      svg.appendChild(ring);
+    }
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', loc.x); circle.setAttribute('cy', svgY);
+    circle.setAttribute('r', loc.current ? 14 : 9);
+    circle.setAttribute('fill', loc.current ? '#cc0000' : '#c8a878');
+    circle.setAttribute('stroke', loc.current ? '#ff4040' : '#888');
+    circle.setAttribute('stroke-width', loc.current ? 2 : 1);
+    g.appendChild(circle);
+
+    g.addEventListener('mouseenter', e => {
+      tooltip.textContent = loc.name;
+      tooltip.style.display = 'block';
+    });
+    g.addEventListener('mousemove', e => {
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 30) + 'px';
+    });
+    g.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    g.addEventListener('click', () => {
+      tooltip.textContent = loc.name + (loc.current ? ' ← Du bist hier' : '');
+      tooltip.style.display = 'block';
+      setTimeout(() => { tooltip.style.display = 'none'; }, 2000);
+    });
+
+    svg.appendChild(g);
+  });
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const [s, models] = await Promise.all([
+      fetch('/api/settings').then(r => r.json()),
+      fetch('/api/models').then(r => r.json())
+    ]);
+    const sel = document.getElementById('sel-model');
+    sel.innerHTML = '';
+    models.forEach(m => {
+      sel.innerHTML += `<option value="${m.id}" ${m.id === s.model ? 'selected' : ''}>${m.label}</option>`;
+    });
+    document.getElementById('sel-context').value = s.context_mode || 'smart';
+  } catch {}
+}
+
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  saveSettings();
+}
+function closeSettingsOnBg(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+async function saveSettings() {
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: document.getElementById('sel-model').value,
+        context_mode: document.getElementById('sel-context').value
+      })
+    });
+  } catch {}
+}
+async function clearHistory() {
+  if (!confirm('Spielverlauf wirklich löschen?')) return;
+  await fetch('/api/history', { method: 'DELETE' });
+  document.getElementById('messages').innerHTML = '';
+  addMessage('system', 'Verlauf gelöscht. Neues Spiel beginnen.');
+  closeSettings();
+}
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
