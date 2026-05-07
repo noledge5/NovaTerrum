@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import re
+from datetime import date
 from pathlib import Path
 from typing import AsyncGenerator, Optional
 
@@ -295,6 +296,19 @@ class SettingsUpdate(BaseModel):
     model: Optional[str] = None
     context_mode: Optional[str] = None
 
+class CharacterCreate(BaseModel):
+    name: str
+    archetype: str
+    attributes: dict
+    skills: dict
+    region: str
+    start_location: str
+
+class OpenSceneRequest(BaseModel):
+    name: str
+    archetype: str
+    region: str
+
 
 @app.get("/api/state")
 async def get_state():
@@ -386,6 +400,126 @@ async def chat(body: ChatRequest):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.post("/api/create-character")
+async def create_character(body: CharacterCreate):
+    global history
+    kon_mod = (body.attributes.get("KON", 10) - 10) // 2
+    hp = max(1, 8 + kon_mod)
+
+    lines = [f"# {body.name}", "", "## Attribute"]
+    for attr in ["STR", "DEX", "KON", "INT", "WIS", "CHA"]:
+        lines.append(f"{attr}: {body.attributes.get(attr, 10)}")
+    lines += ["", "## Modifikatoren"]
+    mods = []
+    for attr in ["STR", "DEX", "KON", "INT", "WIS", "CHA"]:
+        val = body.attributes.get(attr, 10)
+        mod = (val - 10) // 2
+        mods.append(f"{attr}: {'+' if mod >= 0 else ''}{mod}")
+    lines.append(" | ".join(mods))
+    lines += ["", "## HP", f"Max: {hp}", "", "## Skills"]
+    for skill, level in sorted(body.skills.items(), key=lambda x: -x[1]):
+        if level > 0:
+            lines.append(f"{skill}: {level}")
+    lines += ["", "## Archetyp", body.archetype, "", "## Hintergrund", "*(wird vom DM generiert)*", "", "## Notizen", "*(leer)*"]
+    CHARACTER_MD.write_text("\n".join(lines), encoding="utf-8")
+
+    today = date.today().isoformat()
+    current = f"""---
+type: gamestate
+updated: {today}
+---
+
+# Aktueller Spielzustand
+
+## In-Game Datum & Zeit
+
+Datum: 1. Hartmond, Jahr 412
+Uhrzeit: Früher Morgen
+
+## Aufenthaltsort
+
+[[{body.start_location}]]
+
+## PC-Status
+
+**HP:** {hp} / {hp}
+**Aktive Verletzungen:** keine
+**Statuseffekte:** keine
+
+## Inventar
+
+*(leer)*
+
+## Gold & Wertgegenstände
+
+Gold: 15
+
+## Aktive Quests
+
+*(keine)*
+
+## Offene Fäden
+
+*(keine)*
+
+## Wer weiß was über mich?
+
+*(unbekannt)*"""
+    CURRENT_MD.write_text(current, encoding="utf-8")
+    history = []
+    save_json(HISTORY_FILE, history)
+    return {"ok": True, "hp": hp}
+
+
+@app.post("/api/open-scene")
+async def open_scene(body: OpenSceneRequest):
+    global history
+    context = build_context(settings["context_mode"])
+    system = build_system_prompt()
+    if context:
+        system += f"\n\n---\n\nKONTEXT:\n{context}"
+
+    opening_msg = f"Charakter erstellt: {body.name}, {body.archetype}, Startregion: {body.region}. Starte direkt mit einer atmosphärischen Einstiegsszene. Keine Begrüßung, kein Meta-Kommentar. Zweite Person Präsens. Kurze Absätze. Sinneseindrücke zuerst."
+
+    client = anthropic.Anthropic()
+
+    async def stream() -> AsyncGenerator[str, None]:
+        global history
+        full = ""
+        try:
+            with client.messages.stream(
+                model=settings["model"],
+                max_tokens=1024,
+                system=system,
+                messages=[{"role": "user", "content": opening_msg}],
+            ) as s:
+                for chunk in s.text_stream:
+                    full += chunk
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            return
+
+        updates, clean = parse_state_block(full)
+        apply_state_updates(updates)
+        history = [{"role": "user", "content": opening_msg}, {"role": "assistant", "content": clean}]
+        save_json(HISTORY_FILE, history)
+        new_state = parse_current_state()
+        yield f"data: {json.dumps({'done': True, 'clean': clean, 'state': new_state})}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.delete("/api/character")
+async def delete_character():
+    global history
+    history = []
+    save_json(HISTORY_FILE, history)
+    CHARACTER_MD.write_text("# —\n", encoding="utf-8")
+    CURRENT_MD.write_text("---\ntype: gamestate\nupdated: —\n---\n\n# Aktueller Spielzustand\n\n## Aufenthaltsort\n\n[[—]]\n\n## PC-Status\n\n**HP:** — / —\n**Aktive Verletzungen:** keine\n**Statuseffekte:** keine\n\n## Inventar\n\n*(leer)*\n\n## Gold & Wertgegenstände\n\nGold: 0\n\n## Aktive Quests\n\n*(keine)*\n\n## Offene Fäden\n\n*(keine)*\n\n## Wer weiß was über mich?\n\n*(unbekannt)*", encoding="utf-8")
+    return {"ok": True}
 
 
 # Static files (must be last)
