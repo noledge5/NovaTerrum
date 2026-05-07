@@ -19,12 +19,90 @@
   --tab-h: 62px;
   --header-h: 48px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; }
 
-/* Layout */
-#app { display: flex; flex-direction: column; height: 100dvh; }
+/* === WIZARD === */
+#creation-screen {
+  position: fixed; inset: 0; background: #0a0a0a; z-index: 500;
+  display: none; align-items: center; justify-content: center;
+}
+.wiz-inner {
+  width: 100%; max-width: 480px; height: 100dvh; display: flex;
+  flex-direction: column; padding: 20px 20px calc(20px + var(--safe-bottom));
+  padding-top: calc(20px + var(--safe-top));
+}
+.wiz-top { flex-shrink: 0; text-align: center; padding-bottom: 20px; }
+.wiz-logo { font-size: 20px; font-weight: 700; color: #d4a0a0; letter-spacing: 2px; margin-bottom: 4px; }
+.wiz-subtitle { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; }
+.wiz-dots { display: flex; justify-content: center; gap: 8px; }
+.wiz-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: background .2s; }
+.wiz-dot.active { background: var(--accent2); }
+.wiz-dot.done { background: #555; }
+
+.wiz-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+.wiz-step-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.wiz-step-hint { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.5; }
+
+.wiz-name-wrap { padding: 20px 0; }
+.wiz-name-input { width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; color: var(--text); font-size: 24px;
+  font-weight: 700; text-align: center; outline: none; letter-spacing: 1px; }
+.wiz-name-input:focus { border-color: var(--accent2); }
+
+.arch-grid { display: flex; flex-direction: column; gap: 10px; }
+.arch-card { background: var(--surface); border: 2px solid var(--border); border-radius: 10px;
+  padding: 14px; cursor: pointer; transition: border-color .15s, background .15s; }
+.arch-card.selected { border-color: var(--accent2); background: #1c0a0a; }
+.arch-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.arch-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; line-height: 1.4; }
+.arch-attrs { display: flex; gap: 5px; flex-wrap: wrap; }
+.arch-attr { font-size: 11px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 2px 7px; color: var(--text-dim); }
+.arch-attr.hi { color: #a0d4a0; border-color: #2d4a2d; }
+
+.pts-row { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 4px; }
+.pts-num { font-size: 36px; font-weight: 700; color: var(--accent2); }
+.pts-label { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; text-align: center; }
+.sg-title { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px;
+  font-weight: 600; padding: 12px 0 6px; border-top: 1px solid #222; }
+.sg-title:first-of-type { border-top: none; padding-top: 4px; }
+.wiz-sk-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+.wiz-sk-name { flex: 1; font-size: 13px; }
+.wiz-sk-btn { width: 30px; height: 30px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; }
+.wiz-sk-btn:active { background: var(--surface2); }
+.wiz-sk-val { width: 30px; text-align: center; font-size: 15px; font-weight: 600; }
+
+.region-grid { display: flex; flex-direction: column; gap: 10px; }
+.region-card { background: var(--surface); border: 2px solid var(--border); border-radius: 10px;
+  padding: 14px; cursor: pointer; transition: border-color .15s, background .15s; }
+.region-card.selected { border-color: var(--accent2); background: #1c0a0a; }
+.region-name { font-size: 16px; font-weight: 700; color: #d4b896; margin-bottom: 5px; }
+.region-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+.wiz-nav { display: flex; gap: 12px; padding-top: 16px; flex-shrink: 0; }
+.wiz-back { background: none; border: 1px solid var(--border); color: var(--text-dim);
+  padding: 13px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+.wiz-fwd { flex: 1; background: var(--accent); border: none; color: #fff;
+  padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.wiz-fwd:disabled { background: #333; cursor: not-allowed; }
+
+/* === LOADING SCREEN === */
+#loading-screen {
+  position: fixed; inset: 0; background: #000; z-index: 600;
+  display: none; align-items: center; justify-content: center;
+}
+.load-inner { text-align: center; }
+.load-name { font-size: 30px; font-weight: 700; color: #d4a0a0; letter-spacing: 4px;
+  text-transform: uppercase; margin-bottom: 14px; }
+.load-motto { font-size: 13px; color: #444; letter-spacing: 2px; font-style: italic; }
+
+/* === APP === */
+#app { display: none; flex-direction: column; height: 100dvh; }
 #header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; }
 #header .logo { font-size: 17px; font-weight: 700; letter-spacing: 1px; color: #d4a0a0; }
 #header .status-pill { font-size: 12px; color: var(--text-dim); background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
@@ -34,7 +112,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .tab { display: none; position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .tab.active { display: flex; flex-direction: column; }
 
-/* Tab Bar */
 #tab-bar { height: calc(var(--tab-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--surface); border-top: 1px solid var(--border); display: flex; flex-shrink: 0; }
 .tab-btn { flex: 1; background: none; border: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; font-size: 10px; transition: color .15s; padding-bottom: 2px; }
 .tab-btn .icon { font-size: 20px; line-height: 1; }
@@ -50,7 +127,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .cursor { display: inline-block; width: 8px; height: 14px; background: var(--text-dim); margin-left: 2px; vertical-align: middle; animation: blink .7s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-#input-area { padding: 10px 10px 10px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+#input-area { padding: 10px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
 #input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 9px 15px; color: var(--text); font-size: 15px; resize: none; max-height: 120px; outline: none; line-height: 1.4; font-family: inherit; }
 #input:focus { border-color: #555; }
 #btn-send { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 16px; cursor: pointer; flex-shrink: 0; transition: background .15s; }
@@ -66,7 +143,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .hp-text { font-size: 13px; color: var(--text-dim); text-align: right; }
 .hp-text span { color: var(--text); font-weight: 600; }
 .location-name { font-size: 16px; font-weight: 600; color: #d4b896; }
-.location-coords { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .badge { font-size: 12px; padding: 3px 9px; border-radius: 12px; font-weight: 500; }
 .badge.status { background: #3a1a00; color: #f0a050; border: 1px solid #6a3a00; }
@@ -107,11 +183,11 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .quest-row:last-child { border-bottom: none; }
 .quest-name { font-size: 14px; color: #a0c4d4; }
 
-/* === SETTINGS MODAL === */
+/* === SETTINGS === */
 #settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
 #settings-overlay.open { display: flex; }
 #settings-panel { background: var(--surface); border-radius: 16px 16px 0 0; padding: 20px 20px calc(20px + var(--safe-bottom)); width: 100%; max-width: 500px; }
-#settings-panel h2 { font-size: 16px; margin-bottom: 16px; color: var(--text); }
+#settings-panel h2 { font-size: 16px; margin-bottom: 16px; }
 .setting-group { margin-bottom: 16px; }
 .setting-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
 .setting-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; }
@@ -120,6 +196,32 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 </style>
 </head>
 <body>
+
+<!-- ═══ CHARACTER CREATION WIZARD ═══ -->
+<div id="creation-screen">
+  <div class="wiz-inner">
+    <div class="wiz-top">
+      <div class="wiz-logo">⚔ NovaTerrum</div>
+      <div class="wiz-subtitle">Ein neues Leben beginnt</div>
+      <div class="wiz-dots" id="wiz-dots"></div>
+    </div>
+    <div class="wiz-body" id="wiz-body"></div>
+    <div class="wiz-nav">
+      <button class="wiz-back" id="btn-wiz-back" onclick="wizPrev()">← Zurück</button>
+      <button class="wiz-fwd" id="btn-wiz-fwd" onclick="wizNext()">Weiter →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOADING SCREEN ═══ -->
+<div id="loading-screen">
+  <div class="load-inner">
+    <div class="load-name" id="load-name"></div>
+    <div class="load-motto">Fata viam invenient</div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
 <div id="app">
   <header id="header">
     <span class="logo">⚔ NovaTerrum</span>
@@ -128,7 +230,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   </header>
 
   <div id="content">
-    <!-- CHAT -->
     <section id="tab-chat" class="tab active">
       <div id="messages"></div>
       <div id="input-area">
@@ -138,7 +239,6 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       </div>
     </section>
 
-    <!-- STATUS -->
     <section id="tab-status" class="tab">
       <div class="card" id="card-hp">
         <div class="card-title">Trefferpunkte</div>
@@ -148,39 +248,35 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="card">
         <div class="card-title">Aufenthaltsort</div>
         <div class="location-name" id="loc-name">Unbekannt</div>
-        <div class="location-coords" id="loc-coords"></div>
       </div>
-      <div class="card" id="card-effects">
+      <div class="card">
         <div class="card-title">Zustände &amp; Verletzungen</div>
         <div class="badges" id="badges"></div>
       </div>
-      <div class="card" id="card-attrs">
+      <div class="card">
         <div class="card-title">Attribute</div>
-        <div class="attrs-grid" id="attrs-grid"><p class="no-char">Noch kein Charakter erstellt.</p></div>
+        <div class="attrs-grid" id="attrs-grid"><p class="no-char">Kein Charakter.</p></div>
       </div>
-      <div class="card" id="card-skills">
+      <div class="card">
         <div class="card-title">Skills</div>
-        <div id="skills-list"><p class="no-char">Starte ein Gespräch mit dem DM um einen Charakter zu erstellen.</p></div>
+        <div id="skills-list"><p class="no-char">Kein Charakter.</p></div>
       </div>
     </section>
 
-    <!-- WELT -->
     <section id="tab-welt" class="tab">
       <div id="map-wrap">
         <svg id="map-svg" viewBox="0 0 2000 3000" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
       <div class="map-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#e8f4f8"></div>Tundra</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#c8dce4"></div>Tundra</div>
         <div class="legend-item"><div class="legend-dot" style="background:#2d4a2d"></div>Nadelwald</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#4a6b3a"></div>Gemäßigt</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#6b6060"></div>Gebirge</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#c8a850"></div>Steppe</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#d4a96a"></div>Halbwüste</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3a5a30"></div>Gemäßigt</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#5a5050"></div>Gebirge</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a08030"></div>Steppe</div>
         <div class="legend-item"><div class="legend-dot" style="background:#cc0000"></div>Aktuell</div>
       </div>
     </section>
 
-    <!-- INVENTAR -->
     <section id="tab-inventar" class="tab">
       <div class="card">
         <div class="gold-display" id="gold-display">0</div>
@@ -229,7 +325,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
         <option value="full">Voll — gesamtes Wiki</option>
       </select>
     </div>
-    <button class="btn-danger" onclick="clearHistory()">🗑 Spielverlauf löschen</button>
+    <button class="btn-danger" onclick="resetCharacter()">⚠ Charakter zurücksetzen</button>
+    <button class="btn-danger" style="margin-top:6px" onclick="clearHistory()">🗑 Spielverlauf löschen</button>
     <button class="btn-close" onclick="closeSettings()">Schließen</button>
   </div>
 </div>
@@ -237,16 +334,268 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 <div id="map-tooltip"></div>
 
 <script>
-// ─── State ───────────────────────────────────────────────────────────────────
+// ─── Wizard Data ──────────────────────────────────────────────────────────────
+const ARCHETYPES = [
+  { id: 'Krieger', desc: 'Stärke und Ausdauer. Du kennst Krieg.',
+    attrs: {STR:14,KON:12,DEX:10,WIS:10,INT:8,CHA:8},
+    skills: {Nahkampf:15,Blockieren:12,Zähigkeit:10,Athletik:10,Einschüchtern:8,Schmerztoleranz:5} },
+  { id: 'Schurke', desc: 'Schatten und Schnelligkeit. Du lebst zwischen den Regeln.',
+    attrs: {DEX:14,INT:12,STR:10,WIS:10,KON:8,CHA:8},
+    skills: {Schleichen:15,Taschendiebstahl:12,Schlösserknacken:12,Ausweichen:11,Täuschen:10} },
+  { id: 'Jäger', desc: 'Wald und Bogen. Du siehst was andere nicht sehen.',
+    attrs: {DEX:14,WIS:12,KON:10,STR:10,INT:8,CHA:8},
+    skills: {Fernkampf:15,Schleichen:12,Spurenlesen:10,Wahrnehmung:8,Wildnisüberleben:10,Tierkunde:5} },
+  { id: 'Gelehrter', desc: 'Wissen ist Macht. Du hast mehr davon als die meisten.',
+    attrs: {INT:14,WIS:12,CHA:10,KON:10,STR:8,DEX:8},
+    skills: {Heilkunde:15,Arkana:12,Geschichte:10,Alchemie:10,Naturkunde:8,Intuition:5} },
+  { id: 'Händler', desc: 'Gold und Worte. Du weißt was die Leute wollen.',
+    attrs: {CHA:14,INT:12,DEX:10,WIS:10,STR:8,KON:8},
+    skills: {Handel:15,Überreden:12,Täuschen:12,Auftreten:8,Geschichte:8,Mechanik:5} },
+];
+
+const SKILL_GROUPS = [
+  { attr: 'STR', label: 'Stärke', skills: ['Nahkampf','Waffenloser Kampf','Athletik','Blockieren','Schwerarbeit','Einschüchtern'] },
+  { attr: 'DEX', label: 'Geschicklichkeit', skills: ['Fernkampf','Ausweichen','Schleichen','Schlösserknacken','Taschendiebstahl','Akrobatik'] },
+  { attr: 'KON', label: 'Konstitution', skills: ['Ausdauer','Zähigkeit','Giftresistenz','Wildnisüberleben','Schmerztoleranz'] },
+  { attr: 'INT', label: 'Intelligenz', skills: ['Arkana','Heilkunde','Handwerk','Alchemie','Geschichte','Mechanik'] },
+  { attr: 'WIS', label: 'Weisheit', skills: ['Wahrnehmung','Tierkunde','Naturkunde','Spurenlesen','Intuition','Meditation'] },
+  { attr: 'CHA', label: 'Charisma', skills: ['Überreden','Täuschen','Auftreten','Handel','Führung','Verführen'] },
+];
+
+const REGIONS = [
+  { id: 'hartmark', name: 'Hartmark', start: 'hartfeld', desc: 'Kalt, militaristisch. Drei Thronanwärter kämpfen um die Krone. Für Krieger und Söldner.' },
+  { id: 'graumoor', name: 'Graumoor', start: 'grauwall', desc: 'Sumpfland, Schmuggler, Nordseuche breitet sich aus. Für Schurken und Überlebende.' },
+  { id: 'velara', name: 'Velara', start: 'velara-stadt', desc: 'Reiche Handelsstadt am Meer. Geld, Intrigen, viele Messer im Rücken. Für Händler.' },
+  { id: 'montesei', name: 'Montesei', start: 'eisentor', desc: 'Isoliertes Gebirge, alte Geheimnisse, wenige Menschen. Für Einzelgänger und Gelehrte.' },
+];
+
+const TOTAL_PTS = 60;
+const MAX_SKILL = 15;
+
+let wizStep = 0;
+const wiz = { name: '', archetype: null, attrs: {}, skills: {}, region: null, startLoc: '' };
+
+function ptsLeft() {
+  return TOTAL_PTS - Object.values(wiz.skills).reduce((a, b) => a + b, 0);
+}
+
+function skId(s) { return 'sk_' + s.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+function initWizard() {
+  wizStep = 0;
+  Object.assign(wiz, { name: '', archetype: null, attrs: {}, skills: {}, region: null, startLoc: '' });
+  renderWiz();
+}
+
+function renderWiz() {
+  const STEPS = ['Name', 'Archetyp', 'Skills', 'Region'];
+  document.getElementById('wiz-dots').innerHTML = STEPS.map((_, i) =>
+    `<div class="wiz-dot ${i === wizStep ? 'active' : i < wizStep ? 'done' : ''}"></div>`
+  ).join('');
+
+  const back = document.getElementById('btn-wiz-back');
+  back.style.visibility = wizStep === 0 ? 'hidden' : 'visible';
+  document.getElementById('btn-wiz-fwd').textContent = wizStep === 3 ? 'Abenteuer beginnen' : 'Weiter →';
+
+  const body = document.getElementById('wiz-body');
+  if (wizStep === 0) {
+    body.innerHTML = `
+      <div class="wiz-step-title">Wer bist du?</div>
+      <div class="wiz-step-hint">Gib deinem Charakter einen Namen.</div>
+      <div class="wiz-name-wrap">
+        <input class="wiz-name-input" id="wiz-name-inp" type="text" placeholder="Name…"
+          value="${wiz.name}" maxlength="30" autocomplete="off"
+          oninput="wiz.name=this.value.trim()"
+          onkeydown="if(event.key==='Enter')wizNext()">
+      </div>`;
+    setTimeout(() => document.getElementById('wiz-name-inp')?.focus(), 80);
+
+  } else if (wizStep === 1) {
+    const attrOrder = ['STR','DEX','KON','INT','WIS','CHA'];
+    body.innerHTML = `
+      <div class="wiz-step-title">Deine Rolle</div>
+      <div class="wiz-step-hint">Wähle einen Archetyp. Skills werden vorbelegt und können im nächsten Schritt angepasst werden.</div>
+      <div class="arch-grid">
+        ${ARCHETYPES.map(a => {
+          const maxV = Math.max(...Object.values(a.attrs));
+          return `<div class="arch-card ${wiz.archetype===a.id?'selected':''}" onclick="selectArch('${a.id}')">
+            <div class="arch-name">${a.id}</div>
+            <div class="arch-desc">${a.desc}</div>
+            <div class="arch-attrs">${attrOrder.map(at =>
+              `<span class="arch-attr ${a.attrs[at]===maxV?'hi':''}">${at} ${a.attrs[at]}</span>`
+            ).join('')}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+  } else if (wizStep === 2) {
+    const pts = ptsLeft();
+    body.innerHTML = `
+      <div class="pts-row"><span class="pts-num" id="wiz-pts">${pts}</span></div>
+      <div class="pts-label">Punkte übrig (von ${TOTAL_PTS}, max ${MAX_SKILL} pro Skill)</div>
+      ${SKILL_GROUPS.map(g => `
+        <div class="sg-title">${g.label} (${g.attr})</div>
+        ${g.skills.map(s => `
+          <div class="wiz-sk-row">
+            <span class="wiz-sk-name">${s}</span>
+            <button class="wiz-sk-btn" onclick="skAdj('${s}',-1)">−</button>
+            <span class="wiz-sk-val" id="${skId(s)}">${wiz.skills[s]||0}</span>
+            <button class="wiz-sk-btn" onclick="skAdj('${s}',1)">+</button>
+          </div>`).join('')}
+      `).join('')}`;
+
+  } else if (wizStep === 3) {
+    body.innerHTML = `
+      <div class="wiz-step-title">Deine Heimat</div>
+      <div class="wiz-step-hint">Wo beginnt deine Geschichte?</div>
+      <div class="region-grid">
+        ${REGIONS.map(r => `
+          <div class="region-card ${wiz.region===r.id?'selected':''}" onclick="selectRegion('${r.id}','${r.start}')">
+            <div class="region-name">${r.name}</div>
+            <div class="region-desc">${r.desc}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+}
+
+function selectArch(id) {
+  const a = ARCHETYPES.find(x => x.id === id);
+  wiz.archetype = id;
+  wiz.attrs = {...a.attrs};
+  wiz.skills = {...a.skills};
+  renderWiz();
+}
+
+function skAdj(skill, delta) {
+  const cur = wiz.skills[skill] || 0;
+  const next = cur + delta;
+  if (next < 0 || next > MAX_SKILL) return;
+  if (delta > 0 && ptsLeft() <= 0) return;
+  wiz.skills[skill] = next;
+  const el = document.getElementById(skId(skill));
+  if (el) el.textContent = next;
+  const pts = document.getElementById('wiz-pts');
+  if (pts) pts.textContent = ptsLeft();
+}
+
+function selectRegion(id, start) {
+  wiz.region = id;
+  wiz.startLoc = start;
+  renderWiz();
+}
+
+function wizPrev() {
+  if (wizStep > 0) { wizStep--; renderWiz(); }
+}
+
+function wizNext() {
+  if (wizStep === 0 && !wiz.name) { alert('Bitte einen Namen eingeben.'); return; }
+  if (wizStep === 1 && !wiz.archetype) { alert('Bitte einen Archetyp wählen.'); return; }
+  if (wizStep === 3) {
+    if (!wiz.region) { alert('Bitte eine Startregion wählen.'); return; }
+    wizFinish(); return;
+  }
+  wizStep++;
+  renderWiz();
+}
+
+async function wizFinish() {
+  document.getElementById('load-name').textContent = wiz.name.toUpperCase();
+  document.getElementById('creation-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+
+  try {
+    await fetch('/api/create-character', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name: wiz.name, archetype: wiz.archetype, attributes: wiz.attrs,
+        skills: wiz.skills, region: wiz.region, start_location: wiz.startLoc
+      })
+    });
+
+    await new Promise(r => setTimeout(r, 2500));
+
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+
+    await refreshState();
+    await loadMap();
+    await streamOpeningScene();
+
+  } catch(e) {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('creation-screen').style.display = 'flex';
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function streamOpeningScene() {
+  const dmDiv = document.createElement('div');
+  dmDiv.className = 'msg dm';
+  dmDiv.innerHTML = '<div class="dm-label">DM</div><div class="dm-text"><span class="cursor"></span></div>';
+  document.getElementById('messages').appendChild(dmDiv);
+  const dmText = dmDiv.querySelector('.dm-text');
+  scrollMessages();
+  streaming = true;
+  document.getElementById('btn-send').disabled = true;
+  let acc = '';
+
+  try {
+    const res = await fetch('/api/open-scene', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name: wiz.name, archetype: wiz.archetype, region: wiz.region })
+    });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const d = JSON.parse(line.slice(6));
+          if (d.text) {
+            acc += d.text;
+            dmText.textContent = cleanStateBlock(acc);
+            const c = document.createElement('span'); c.className = 'cursor';
+            dmText.appendChild(c); scrollMessages();
+          }
+          if (d.done) { dmText.textContent = d.clean || cleanStateBlock(acc); if (d.state) updateStateDisplay(d.state); }
+          if (d.error) dmText.textContent = '⚠ ' + d.error;
+        } catch {}
+      }
+    }
+  } catch(e) { dmText.textContent = '⚠ Verbindungsfehler.'; }
+
+  streaming = false;
+  document.getElementById('btn-send').disabled = false;
+  document.getElementById('input').focus();
+}
+
+// ─── App State ────────────────────────────────────────────────────────────────
 let gameState = {};
 let streaming = false;
 
-// ─── Init ────────────────────────────────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   await loadSettings();
-  await refreshState();
-  await loadMap();
-  loadHistory();
+  try {
+    const state = await fetch('/api/state').then(r => r.json());
+    if (!state.character_name) {
+      document.getElementById('creation-screen').style.display = 'flex';
+      initWizard();
+    } else {
+      document.getElementById('app').style.display = 'flex';
+      updateStateDisplay(state);
+      await loadMap();
+      loadHistory();
+    }
+  } catch {
+    document.getElementById('creation-screen').style.display = 'flex';
+    initWizard();
+  }
 }
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
@@ -297,15 +646,12 @@ async function sendMessage() {
   const input = document.getElementById('input');
   const msg = input.value.trim();
   if (!msg) return;
-
   input.value = '';
   input.style.height = 'auto';
   document.getElementById('btn-send').disabled = true;
   streaming = true;
-
   addMessage('player', msg);
 
-  // DM bubble with cursor
   const dmDiv = document.createElement('div');
   dmDiv.className = 'msg dm';
   dmDiv.innerHTML = '<div class="dm-label">DM</div><div class="dm-text"><span class="cursor"></span></div>';
@@ -314,46 +660,33 @@ async function sendMessage() {
   scrollMessages();
 
   let accumulated = '';
-
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ message: msg })
     });
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-
     while (true) {
-      const { done, value } = await reader.read();
+      const {done, value} = await reader.read();
       if (done) break;
-      const lines = decoder.decode(value).split('\n');
-      for (const line of lines) {
+      for (const line of decoder.decode(value).split('\n')) {
         if (!line.startsWith('data: ')) continue;
         try {
           const data = JSON.parse(line.slice(6));
           if (data.text) {
             accumulated += data.text;
             dmText.textContent = cleanStateBlock(accumulated);
-            const cursor = document.createElement('span');
-            cursor.className = 'cursor';
-            dmText.appendChild(cursor);
-            scrollMessages();
+            const c = document.createElement('span'); c.className = 'cursor';
+            dmText.appendChild(c); scrollMessages();
           }
-          if (data.done) {
-            dmText.textContent = data.clean || cleanStateBlock(accumulated);
-            if (data.state) updateStateDisplay(data.state);
-          }
-          if (data.error) {
-            dmText.textContent = '⚠ Fehler: ' + data.error;
-          }
+          if (data.done) { dmText.textContent = data.clean || cleanStateBlock(accumulated); if (data.state) updateStateDisplay(data.state); }
+          if (data.error) dmText.textContent = '⚠ ' + data.error;
         } catch {}
       }
     }
-  } catch (e) {
-    dmText.textContent = '⚠ Verbindungsfehler.';
-  }
+  } catch(e) { dmText.textContent = '⚠ Verbindungsfehler.'; }
 
   streaming = false;
   document.getElementById('btn-send').disabled = false;
@@ -365,10 +698,8 @@ async function loadHistory() {
     const hist = await fetch('/api/history').then(r => r.json());
     const msgs = document.getElementById('messages');
     msgs.innerHTML = '';
-    if (hist.length === 0) {
-      addMessage('system', 'Willkommen in NovaTerrum. Sprich mit dem DM um zu beginnen.');
-    }
     for (const m of hist) {
+      if (m.role === 'user' && m.content.startsWith('Charakter erstellt:')) continue;
       addMessage(m.role === 'user' ? 'player' : 'dm', m.content);
     }
   } catch {}
@@ -376,22 +707,15 @@ async function loadHistory() {
 
 // ─── State Display ────────────────────────────────────────────────────────────
 async function refreshState() {
-  try {
-    const state = await fetch('/api/state').then(r => r.json());
-    updateStateDisplay(state);
-  } catch {}
+  try { const s = await fetch('/api/state').then(r => r.json()); updateStateDisplay(s); } catch {}
 }
 
 function updateStateDisplay(state) {
   gameState = state;
-
-  // Header pill
   const pill = document.getElementById('header-status');
   if (state.hp_current !== null && state.hp_max) {
     pill.textContent = `❤ ${state.hp_current}/${state.hp_max}`;
   }
-
-  // HP Bar
   if (state.hp_current !== null && state.hp_max) {
     const pct = Math.max(0, Math.min(100, (state.hp_current / state.hp_max) * 100));
     const bar = document.getElementById('hp-bar');
@@ -399,190 +723,114 @@ function updateStateDisplay(state) {
     bar.style.background = pct > 60 ? '#2d7a2d' : pct > 25 ? '#7a6200' : '#8b0000';
     document.getElementById('hp-text').textContent = `${state.hp_current} / ${state.hp_max} HP`;
   }
-
-  // Location
   document.getElementById('loc-name').textContent = state.location || '—';
 
-  // Badges
   const badges = document.getElementById('badges');
   badges.innerHTML = '';
-  const all = [
-    ...state.status_effects.map(s => ({ text: s, cls: 'status' })),
-    ...state.injuries.map(i => ({ text: i, cls: 'injury' }))
-  ];
-  if (all.length === 0) {
-    badges.innerHTML = '<span class="badge empty">Keine Zustände</span>';
-  } else {
-    all.forEach(({ text, cls }) => {
-      const b = document.createElement('span');
-      b.className = `badge ${cls}`;
-      b.textContent = text;
-      badges.appendChild(b);
-    });
-  }
+  const all = [...(state.status_effects||[]).map(s => ({text:s,cls:'status'})), ...(state.injuries||[]).map(i => ({text:i,cls:'injury'}))];
+  if (all.length === 0) badges.innerHTML = '<span class="badge empty">Keine Zustände</span>';
+  else all.forEach(({text,cls}) => { const b = document.createElement('span'); b.className=`badge ${cls}`; b.textContent=text; badges.appendChild(b); });
 
-  // Attributes
-  const attrs = state.attributes;
+  const attrs = state.attributes || {};
   const grid = document.getElementById('attrs-grid');
   if (Object.keys(attrs).length > 0) {
     grid.innerHTML = '';
     ['STR','DEX','KON','INT','WIS','CHA'].forEach(a => {
       const val = attrs[a] || 10;
-      const mod = Math.floor((val - 10) / 2);
-      const modStr = (mod >= 0 ? '+' : '') + mod;
-      grid.innerHTML += `<div class="attr-cell">
-        <div class="attr-name">${a}</div>
-        <div class="attr-val">${val}</div>
-        <div class="attr-mod">${modStr}</div>
-      </div>`;
+      const mod = Math.floor((val-10)/2);
+      grid.innerHTML += `<div class="attr-cell"><div class="attr-name">${a}</div><div class="attr-val">${val}</div><div class="attr-mod">${mod>=0?'+':''}${mod}</div></div>`;
     });
   }
 
-  // Skills
-  const skills = state.skills;
+  const skills = state.skills || {};
   const skillList = document.getElementById('skills-list');
   if (Object.keys(skills).length > 0) {
     skillList.innerHTML = '';
-    Object.entries(skills).sort((a,b) => b[1]-a[1]).forEach(([name, level]) => {
-      const nextCost = level > 0 ? level * level * 10 : 10;
-      const row = document.createElement('div');
-      row.className = 'skill-row';
-      row.innerHTML = `<span class="skill-name">${name}</span>
-        <div class="skill-bar-wrap"><div class="skill-bar" style="width:${Math.min(100, level*4)}%"></div></div>
-        <span class="skill-level">${level}</span>`;
+    Object.entries(skills).sort((a,b) => b[1]-a[1]).forEach(([name,level]) => {
+      const row = document.createElement('div'); row.className = 'skill-row';
+      row.innerHTML = `<span class="skill-name">${name}</span><div class="skill-bar-wrap"><div class="skill-bar" style="width:${Math.min(100,level*4)}%"></div></div><span class="skill-level">${level}</span>`;
       skillList.appendChild(row);
     });
   }
 
-  // Gold
   document.getElementById('gold-display').textContent = state.gold || 0;
 
-  // Inventory
   const itemList = document.getElementById('item-list');
-  if (state.inventory.length === 0) {
-    itemList.innerHTML = '<p class="empty-state">Inventar leer.</p>';
-  } else {
-    itemList.innerHTML = '';
-    state.inventory.forEach(item => {
-      itemList.innerHTML += `<div class="item-row">
-        <span class="item-icon">⚔</span>
-        <span class="item-name">${item}</span>
-      </div>`;
-    });
-  }
+  const inv = state.inventory || [];
+  if (inv.length === 0) itemList.innerHTML = '<p class="empty-state">Inventar leer.</p>';
+  else { itemList.innerHTML = ''; inv.forEach(item => { itemList.innerHTML += `<div class="item-row"><span class="item-icon">⚔</span><span class="item-name">${item}</span></div>`; }); }
 
-  // Quests
   const questCard = document.getElementById('card-quests');
   const questList = document.getElementById('quest-list');
-  if (state.quests.length > 0) {
+  const quests = state.quests || [];
+  if (quests.length > 0) {
     questCard.style.display = '';
     questList.innerHTML = '';
-    state.quests.forEach(q => {
-      questList.innerHTML += `<div class="quest-row"><div class="quest-name">📜 ${q}</div></div>`;
-    });
-  } else {
-    questCard.style.display = 'none';
-  }
+    quests.forEach(q => { questList.innerHTML += `<div class="quest-row"><div class="quest-name">📜 ${q}</div></div>`; });
+  } else { questCard.style.display = 'none'; }
 }
 
 // ─── Map ──────────────────────────────────────────────────────────────────────
-const REGION_COLORS = {
-  tundra: '#c8e0e8', nadelwald: '#2d4a2d', gemäßigt: '#3a5a30',
-  gebirge: '#5a5050', steppe: '#a08030', halbwüste: '#b08848',
-  küste: '#304858', inseln: '#205048', mitte: '#3a5a30', nord: '#2d4a2d',
-  süd: '#a08030', default: '#3a3a3a'
-};
-
 async function loadMap() {
-  try {
-    const locs = await fetch('/api/map').then(r => r.json());
-    renderMap(locs);
-  } catch {}
+  try { const locs = await fetch('/api/map').then(r => r.json()); renderMap(locs); } catch {}
 }
 
 function renderMap(locations) {
   const svg = document.getElementById('map-svg');
   svg.innerHTML = '';
-
-  // Climate zone backgrounds (SVG y = 3000 - world y, flipped)
   const zones = [
-    { y: 2700, h: 300, color: '#b08848', label: 'Halbwüste' },
-    { y: 2200, h: 500, color: '#a08030', label: 'Steppe' },
-    { y: 1100, h: 1100, color: '#3a5a30', label: 'Gemäßigt' },
-    { y: 500,  h: 600,  color: '#2d4a2d', label: 'Nadelwald' },
-    { y: 0,    h: 500,  color: '#c8dce4', label: 'Tundra' },
+    {y:2700,h:300,color:'#b08848'},{y:2200,h:500,color:'#a08030'},
+    {y:1100,h:1100,color:'#3a5a30'},{y:500,h:600,color:'#2d4a2d'},{y:0,h:500,color:'#c8dce4'},
   ];
   zones.forEach(z => {
-    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rect.setAttribute('x', 0); rect.setAttribute('y', z.y);
-    rect.setAttribute('width', 2000); rect.setAttribute('height', z.h);
-    rect.setAttribute('fill', z.color); rect.setAttribute('opacity', '0.35');
-    svg.appendChild(rect);
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',0); r.setAttribute('y',z.y); r.setAttribute('width',2000); r.setAttribute('height',z.h);
+    r.setAttribute('fill',z.color); r.setAttribute('opacity','0.35'); svg.appendChild(r);
   });
+  const gbg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  gbg.setAttribute('x',750); gbg.setAttribute('y',1400); gbg.setAttribute('width',600); gbg.setAttribute('height',600);
+  gbg.setAttribute('fill','#5a5050'); gbg.setAttribute('opacity','0.4'); svg.appendChild(gbg);
 
-  // Gebirge overlay
-  const gbg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  gbg.setAttribute('x', 750); gbg.setAttribute('y', 1400); // world y 1000-1600 → svg 1400-2000
-  gbg.setAttribute('width', 600); gbg.setAttribute('height', 600);
-  gbg.setAttribute('fill', '#5a5050'); gbg.setAttribute('opacity', '0.4');
-  svg.appendChild(gbg);
-
-  // Grid lines (subtle)
-  for (let x = 0; x <= 2000; x += 500) {
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x); line.setAttribute('y1', 0);
-    line.setAttribute('x2', x); line.setAttribute('y2', 3000);
-    line.setAttribute('stroke', '#ffffff10'); line.setAttribute('stroke-width', 1);
-    svg.appendChild(line);
+  for (let x=0;x<=2000;x+=500) {
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',3000);
+    l.setAttribute('stroke','#ffffff10');l.setAttribute('stroke-width',1);svg.appendChild(l);
   }
-  for (let y = 0; y <= 3000; y += 500) {
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', 0); line.setAttribute('y1', y);
-    line.setAttribute('x2', 2000); line.setAttribute('y2', y);
-    line.setAttribute('stroke', '#ffffff10'); line.setAttribute('stroke-width', 1);
-    svg.appendChild(line);
+  for (let y=0;y<=3000;y+=500) {
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',0);l.setAttribute('y1',y);l.setAttribute('x2',2000);l.setAttribute('y2',y);
+    l.setAttribute('stroke','#ffffff10');l.setAttribute('stroke-width',1);svg.appendChild(l);
   }
 
-  // Locations
   const tooltip = document.getElementById('map-tooltip');
   locations.forEach(loc => {
     const svgY = 3000 - loc.y;
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
     g.style.cursor = 'pointer';
-
     if (loc.current) {
-      // Pulsing ring
-      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      ring.setAttribute('cx', loc.x); ring.setAttribute('cy', svgY); ring.setAttribute('r', 22);
-      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#cc0000');
-      ring.setAttribute('stroke-width', 2); ring.setAttribute('opacity', '0.5');
-      ring.innerHTML = '<animate attributeName="r" values="18;26;18" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>';
+      const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ring.setAttribute('cx',loc.x); ring.setAttribute('cy',svgY); ring.setAttribute('r',22);
+      ring.setAttribute('fill','none'); ring.setAttribute('stroke','#cc0000');
+      ring.setAttribute('stroke-width',2); ring.setAttribute('opacity','0.5');
+      ring.innerHTML='<animate attributeName="r" values="18;26;18" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>';
       svg.appendChild(ring);
     }
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', loc.x); circle.setAttribute('cy', svgY);
-    circle.setAttribute('r', loc.current ? 14 : 9);
-    circle.setAttribute('fill', loc.current ? '#cc0000' : '#c8a878');
-    circle.setAttribute('stroke', loc.current ? '#ff4040' : '#888');
-    circle.setAttribute('stroke-width', loc.current ? 2 : 1);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',loc.x); circle.setAttribute('cy',svgY);
+    circle.setAttribute('r',loc.current?14:9);
+    circle.setAttribute('fill',loc.current?'#cc0000':'#c8a878');
+    circle.setAttribute('stroke',loc.current?'#ff4040':'#888');
+    circle.setAttribute('stroke-width',loc.current?2:1);
     g.appendChild(circle);
-
-    g.addEventListener('mouseenter', e => {
-      tooltip.textContent = loc.name;
-      tooltip.style.display = 'block';
-    });
-    g.addEventListener('mousemove', e => {
-      tooltip.style.left = (e.clientX + 12) + 'px';
-      tooltip.style.top = (e.clientY - 30) + 'px';
-    });
-    g.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-    g.addEventListener('click', () => {
-      tooltip.textContent = loc.name + (loc.current ? ' ← Du bist hier' : '');
-      tooltip.style.display = 'block';
-      setTimeout(() => { tooltip.style.display = 'none'; }, 2000);
-    });
-
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',loc.x); label.setAttribute('y',svgY+24);
+    label.setAttribute('text-anchor','middle'); label.setAttribute('font-size','18');
+    label.setAttribute('fill','#aaa'); label.textContent = loc.name;
+    g.appendChild(label);
+    g.addEventListener('mouseenter', () => { tooltip.textContent=loc.name; tooltip.style.display='block'; });
+    g.addEventListener('mousemove', e => { tooltip.style.left=(e.clientX+12)+'px'; tooltip.style.top=(e.clientY-30)+'px'; });
+    g.addEventListener('mouseleave', () => { tooltip.style.display='none'; });
+    g.addEventListener('click', () => { tooltip.textContent=loc.name+(loc.current?' ← Du bist hier':''); tooltip.style.display='block'; setTimeout(()=>tooltip.style.display='none',2000); });
     svg.appendChild(g);
   });
 }
@@ -590,47 +838,36 @@ function renderMap(locations) {
 // ─── Settings ─────────────────────────────────────────────────────────────────
 async function loadSettings() {
   try {
-    const [s, models] = await Promise.all([
-      fetch('/api/settings').then(r => r.json()),
-      fetch('/api/models').then(r => r.json())
-    ]);
+    const [s, models] = await Promise.all([fetch('/api/settings').then(r=>r.json()), fetch('/api/models').then(r=>r.json())]);
     const sel = document.getElementById('sel-model');
     sel.innerHTML = '';
-    models.forEach(m => {
-      sel.innerHTML += `<option value="${m.id}" ${m.id === s.model ? 'selected' : ''}>${m.label}</option>`;
-    });
+    models.forEach(m => { sel.innerHTML += `<option value="${m.id}" ${m.id===s.model?'selected':''}>${m.label}</option>`; });
     document.getElementById('sel-context').value = s.context_mode || 'smart';
   } catch {}
 }
-
-function openSettings() {
-  document.getElementById('settings-overlay').classList.add('open');
-}
-function closeSettings() {
-  document.getElementById('settings-overlay').classList.remove('open');
-  saveSettings();
-}
-function closeSettingsOnBg(e) {
-  if (e.target === document.getElementById('settings-overlay')) closeSettings();
-}
+function openSettings() { document.getElementById('settings-overlay').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); saveSettings(); }
+function closeSettingsOnBg(e) { if (e.target===document.getElementById('settings-overlay')) closeSettings(); }
 async function saveSettings() {
   try {
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: document.getElementById('sel-model').value,
-        context_mode: document.getElementById('sel-context').value
-      })
-    });
+    await fetch('/api/settings', {method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:document.getElementById('sel-model').value, context_mode:document.getElementById('sel-context').value})});
   } catch {}
 }
 async function clearHistory() {
   if (!confirm('Spielverlauf wirklich löschen?')) return;
-  await fetch('/api/history', { method: 'DELETE' });
+  await fetch('/api/history', {method:'DELETE'});
   document.getElementById('messages').innerHTML = '';
-  addMessage('system', 'Verlauf gelöscht. Neues Spiel beginnen.');
   closeSettings();
+}
+async function resetCharacter() {
+  if (!confirm('Charakter und Spielverlauf wirklich zurücksetzen? Das kann nicht rückgängig gemacht werden.')) return;
+  await fetch('/api/character', {method:'DELETE'});
+  closeSettings();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('creation-screen').style.display = 'flex';
+  initWizard();
 }
 
 // ─── Start ────────────────────────────────────────────────────────────────────
