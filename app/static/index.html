@@ -350,6 +350,8 @@ const ARCHETYPES = [
   { id: 'Händler', desc: 'Gold und Worte. Du weißt was die Leute wollen.',
     attrs: {CHA:14,INT:12,DEX:10,WIS:10,STR:8,KON:8},
     skills: {Handel:15,Überreden:12,Täuschen:12,Auftreten:8,Geschichte:8,Mechanik:5} },
+  { id: '__custom__', desc: 'Dein eigener Weg. Attribute und Skills frei verteilen.',
+    attrs: {STR:10,KON:10,DEX:10,WIS:10,INT:10,CHA:10}, skills: {} },
 ];
 
 const SKILL_GROUPS = [
@@ -413,9 +415,20 @@ function renderWiz() {
     const attrOrder = ['STR','DEX','KON','INT','WIS','CHA'];
     body.innerHTML = `
       <div class="wiz-step-title">Deine Rolle</div>
-      <div class="wiz-step-hint">Wähle einen Archetyp. Skills werden vorbelegt und können im nächsten Schritt angepasst werden.</div>
+      <div class="wiz-step-hint">Wähle einen Archetyp oder erstelle eine eigene Klasse.</div>
       <div class="arch-grid">
         ${ARCHETYPES.map(a => {
+          if (a.id === '__custom__') {
+            return `<div class="arch-card ${wiz.archetype==='__custom__'?'selected':''}" onclick="selectArch('__custom__')">
+              <div class="arch-name">✏ Eigene Klasse</div>
+              <div class="arch-desc">${a.desc}</div>
+              <div class="arch-attrs"><span class="arch-attr">Alle Attribute 10 — frei anpassbar</span></div>
+              ${wiz.archetype==='__custom__' ? `<input class="wiz-name-input" id="custom-arch-inp" type="text"
+                placeholder="Klassenname…" value="${wiz.customArchName||''}" maxlength="30"
+                onclick="event.stopPropagation()" oninput="wiz.customArchName=this.value.trim()"
+                style="margin-top:10px;font-size:16px;padding:10px;">` : ''}
+            </div>`;
+          }
           const maxV = Math.max(...Object.values(a.attrs));
           return `<div class="arch-card ${wiz.archetype===a.id?'selected':''}" onclick="selectArch('${a.id}')">
             <div class="arch-name">${a.id}</div>
@@ -462,7 +475,9 @@ function selectArch(id) {
   wiz.archetype = id;
   wiz.attrs = {...a.attrs};
   wiz.skills = {...a.skills};
+  if (id === '__custom__') wiz.customArchName = wiz.customArchName || '';
   renderWiz();
+  if (id === '__custom__') setTimeout(() => document.getElementById('custom-arch-inp')?.focus(), 80);
 }
 
 function skAdj(skill, delta) {
@@ -490,6 +505,7 @@ function wizPrev() {
 function wizNext() {
   if (wizStep === 0 && !wiz.name) { alert('Bitte einen Namen eingeben.'); return; }
   if (wizStep === 1 && !wiz.archetype) { alert('Bitte einen Archetyp wählen.'); return; }
+  if (wizStep === 1 && wiz.archetype === '__custom__' && !wiz.customArchName) { alert('Bitte einen Klassennamen eingeben.'); return; }
   if (wizStep === 3) {
     if (!wiz.region) { alert('Bitte eine Startregion wählen.'); return; }
     wizFinish(); return;
@@ -508,7 +524,9 @@ async function wizFinish() {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        name: wiz.name, archetype: wiz.archetype, attributes: wiz.attrs,
+        name: wiz.name,
+        archetype: wiz.archetype === '__custom__' ? wiz.customArchName : wiz.archetype,
+        attributes: wiz.attrs,
         skills: wiz.skills, region: wiz.region, start_location: wiz.startLoc
       })
     });
@@ -544,7 +562,7 @@ async function streamOpeningScene() {
     const res = await fetch('/api/open-scene', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name: wiz.name, archetype: wiz.archetype, region: wiz.region })
+      body: JSON.stringify({ name: wiz.name, archetype: wiz.archetype === '__custom__' ? wiz.customArchName : wiz.archetype, region: wiz.region })
     });
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
